@@ -33,41 +33,47 @@ func main() {
 	instanceInfo, err := commands.GetInstanceInfo(request.Version.Instance, *request.Source.Project)
 
 	err = ioutil.WriteFile(writeDir + "/helm_release_name", []byte(instanceInfo.Name + "-gcloudsql-proxy"), 0644)
-	check(err)
+	commands.Check(err)
 
 	err = ioutil.WriteFile(writeDir + "/instance_name", []byte(instanceInfo.Name), 0644)
-	check(err)
+	commands.Check(err)
 
-	err = ioutil.WriteFile(writeDir + "/port", []byte(strconv.Itoa(InstanceTypeToPort(instanceInfo.InstanceType))), 0644)
-	check(err)
+	err = ioutil.WriteFile(writeDir + "/port", []byte(strconv.Itoa(InstanceTypeToPort(instanceInfo.DatabaseVersion))), 0644)
+	commands.Check(err)
 
 	err = ioutil.WriteFile(writeDir + "/project", []byte(*request.Source.Project), 0644)
-	check(err)
+	commands.Check(err)
 
 	err = ioutil.WriteFile(writeDir + "/region", []byte(instanceInfo.Region), 0644)
-	check(err)
+	commands.Check(err)
 
-	var version models.ConcourseGCloudSQLVersion
-
-	version.Version.Instance = instanceInfo.Name
+	var version = models.ConcourseInOutput{
+		Version: models.Version{
+			Instance: instanceInfo.Name,
+		},
+		Metadata: []models.Metadata{
+			{
+				Name:  "region",
+				Value: instanceInfo.Region,
+			},
+			{
+				Name: "instanceType",
+				Value: strings.ToLower(instanceInfo.DatabaseVersion),
+			},
+		},
+	}
 
 	jsonOutput, err := json.Marshal(version)
 
 	fmt.Fprintf(os.Stdout, "%s\n", jsonOutput)
 }
 
-func InstanceTypeToPort(instanceType string) int {
-	if strings.HasPrefix(instanceType, "POSTGRES") {
+func InstanceTypeToPort(databaseVersion string) int {
+	if strings.HasPrefix(databaseVersion, "POSTGRES") {
 		return 5432
-	} else if strings.HasPrefix(instanceType, "MYSQL") {
+	} else if strings.HasPrefix(databaseVersion, "MYSQL") {
 		return 3306
 	} else {
-		panic("unknown instance type")
-	}
-}
-
-func check(e error) {
-	if e != nil {
-		panic(e)
+		panic("unknown database type")
 	}
 }

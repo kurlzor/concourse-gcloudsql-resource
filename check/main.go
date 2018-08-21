@@ -20,6 +20,7 @@ func main() {
 	}
 
 	err = request.Source.Validate()
+
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "invalid configuration:", err)
 		os.Exit(1)
@@ -36,10 +37,10 @@ func main() {
 
 	sort.Sort(instances)
 
-	versions := make([]models.ConcourseGCloudSQLVersion, len(instances))
+	versions := make([]models.Version, len(instances))
 
 	for i, instance := range instances {
-		versions[i].Version.Instance = instance.Name
+		versions[i].Instance = instance.Name
 	}
 
 	output, err := json.Marshal(versions)

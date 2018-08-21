@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"github.com/Evaneos/concourse-gcloudsql-resource/models"
 	"errors"
+	"github.com/google/uuid"
+	"io/ioutil"
 )
 
 func runCommand(command *exec.Cmd) ([]byte, error) {
@@ -34,16 +36,22 @@ func ListInstances(project string) (models.GCloudSQLInstanceList, error) {
 	}
 
 	instances := make(models.GCloudSQLInstanceList, 0)
-	json.Unmarshal(output, instances)
+	err = json.Unmarshal(output, &instances)
+
+	if err != nil {
+		panic(err)
+	}
 
 	return instances, err
 }
 
 func ActivateServiceAccount(serviceAccount string) error {
+	saPath := WriteServiceAccountToFile(serviceAccount)
+
 	args := []string {
 		"auth",
 		"activate-service-account",
-		fmt.Sprintf("--key-file=%s", serviceAccount),
+		fmt.Sprintf("--key-file=%s", saPath),
 		"--quiet",
 	}
 
@@ -52,7 +60,7 @@ func ActivateServiceAccount(serviceAccount string) error {
 	return err
 }
 
-func GetInstanceInfo(name string, project string) (*models.GCloudSQLInstance, error) {
+func GetInstanceInfo(name string, project string) (models.GCloudSQLInstance, error) {
 	args := []string {
 		"sql",
 		"instances",
@@ -65,11 +73,33 @@ func GetInstanceInfo(name string, project string) (*models.GCloudSQLInstance, er
 	output, err := runCommand(exec.Command("gcloud", args...))
 
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	var instance *models.GCloudSQLInstance
-	json.Unmarshal(output, instance)
+	var instance models.GCloudSQLInstance
+	err = json.Unmarshal(output, &instance)
+
+	if err != nil {
+		panic(err)
+	}
 
 	return instance, nil
+}
+
+func WriteServiceAccountToFile(serviceAccount string) string {
+	saUuid, err := uuid.NewRandom()
+	Check(err)
+
+	saPath := "/tmp/%s" + saUuid.String()
+
+	err = ioutil.WriteFile(saPath, []byte(serviceAccount), 0644)
+	Check(err)
+
+	return saPath
+}
+
+func Check(e error) {
+	if e != nil {
+		panic(e)
+	}
 }
