@@ -38,7 +38,8 @@ func (source Source) Validate() error {
 type GCloudSQLInstance struct {
 	Name string `json:"instance"`
 	instanceType string
-	region string
+	Port int
+	Region string
 	creationTime time.Time `json:"serverCaCert:createTime"`
 }
 
