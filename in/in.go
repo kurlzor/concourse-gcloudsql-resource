@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/Evaneos/concourse-gcloudsql-resource/commands"
 	"io/ioutil"
+	"strings"
+	"strconv"
 )
 
 func main() {
@@ -36,7 +38,7 @@ func main() {
 	err = ioutil.WriteFile(writeDir + "/instance_name", []byte(instanceInfo.Name), 0644)
 	check(err)
 
-	err = ioutil.WriteFile(writeDir + "/port", []byte(instanceInfo.Port), 0644)
+	err = ioutil.WriteFile(writeDir + "/port", []byte(strconv.Itoa(InstanceTypeToPort(instanceInfo.InstanceType))), 0644)
 	check(err)
 
 	err = ioutil.WriteFile(writeDir + "/project", []byte(*request.Source.Project), 0644)
@@ -45,9 +47,23 @@ func main() {
 	err = ioutil.WriteFile(writeDir + "/region", []byte(instanceInfo.Region), 0644)
 	check(err)
 
-	output, err := json.Marshal(instanceInfo)
+	var version models.ConcourseGCloudSQLVersion
 
-	fmt.Fprintf(os.Stdout, "%s\n", output)
+	version.Version.Instance = instanceInfo.Name
+
+	jsonOutput, err := json.Marshal(version)
+
+	fmt.Fprintf(os.Stdout, "%s\n", jsonOutput)
+}
+
+func InstanceTypeToPort(instanceType string) int {
+	if strings.HasPrefix(instanceType, "POSTGRES") {
+		return 5432
+	} else if strings.HasPrefix(instanceType, "MYSQL") {
+		return 3306
+	} else {
+		panic("unknown instance type")
+	}
 }
 
 func check(e error) {

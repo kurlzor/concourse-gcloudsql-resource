@@ -35,7 +35,14 @@ func main() {
 	}
 
 	sort.Sort(instances)
-	output, err := json.Marshal(instances)
+
+	versions := make([]models.ConcourseGCloudSQLVersion, len(instances))
+
+	for i, instance := range instances {
+		versions[i].Version.Instance = instance.Name
+	}
+
+	output, err := json.Marshal(versions)
 
 	fmt.Fprintf(os.Stdout, "%s\n", output)
 }
