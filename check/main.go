@@ -15,25 +15,18 @@ func main() {
 	err := json.NewDecoder(os.Stdin).Decode(&request)
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "parse error:", err.Error())
-		os.Exit(1)
+		panic("parse error:" + err.Error())
 	}
 
 	err = request.Source.Validate()
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "invalid configuration:", err)
-		os.Exit(1)
+		panic("invalid configuration:" + err.Error())
 	}
 
 	commands.ActivateServiceAccount(*request.Source.ServiceAccount)
 
-	instances, err := commands.ListInstances(*request.Source.Project)
-
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "error while listing instances:", err.Error())
-		os.Exit(1)
-	}
+	instances := commands.ListInstances(*request.Source.Project)
 
 	sort.Sort(instances)
 
@@ -44,6 +37,7 @@ func main() {
 	}
 
 	output, err := json.Marshal(versions)
+	commands.CheckError(err)
 
 	fmt.Fprintf(os.Stdout, "%s\n", output)
 }

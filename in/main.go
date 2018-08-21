@@ -18,34 +18,23 @@ func main() {
 	err := json.NewDecoder(os.Stdin).Decode(&request)
 
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "parse error:", err.Error())
-		os.Exit(1)
+		panic("parse error:" + err.Error())
 	}
 
 	err = request.Source.Validate()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "invalid configuration:", err)
-		os.Exit(1)
+		panic("invalid configuration:" + err.Error())
 	}
 
 	commands.ActivateServiceAccount(*request.Source.ServiceAccount)
 
-	instanceInfo, err := commands.GetInstanceInfo(request.Version.Instance, *request.Source.Project)
+	instanceInfo := commands.GetInstanceInfo(request.Version.Instance, *request.Source.Project)
 
-	err = ioutil.WriteFile(writeDir + "/helm_release_name", []byte(instanceInfo.Name + "-gcloudsql-proxy"), 0644)
-	commands.Check(err)
-
-	err = ioutil.WriteFile(writeDir + "/instance_name", []byte(instanceInfo.Name), 0644)
-	commands.Check(err)
-
-	err = ioutil.WriteFile(writeDir + "/port", []byte(strconv.Itoa(InstanceTypeToPort(instanceInfo.DatabaseVersion))), 0644)
-	commands.Check(err)
-
-	err = ioutil.WriteFile(writeDir + "/project", []byte(*request.Source.Project), 0644)
-	commands.Check(err)
-
-	err = ioutil.WriteFile(writeDir + "/region", []byte(instanceInfo.Region), 0644)
-	commands.Check(err)
+	WriteInfoToOutputFile(writeDir + "/helm_release_name", instanceInfo.Name + "-gcloudsql-proxy")
+	WriteInfoToOutputFile(writeDir + "/instance_name", instanceInfo.Name)
+	WriteInfoToOutputFile(writeDir + "/port", strconv.Itoa(InstanceTypeToPort(instanceInfo.DatabaseVersion)))
+	WriteInfoToOutputFile(writeDir + "/project", *request.Source.Project)
+	WriteInfoToOutputFile(writeDir + "/region", instanceInfo.Region)
 
 	var version = models.ConcourseInOutput{
 		Version: models.Version{
@@ -64,6 +53,7 @@ func main() {
 	}
 
 	jsonOutput, err := json.Marshal(version)
+	commands.CheckError(err)
 
 	fmt.Fprintf(os.Stdout, "%s\n", jsonOutput)
 }
@@ -76,4 +66,9 @@ func InstanceTypeToPort(databaseVersion string) int {
 	} else {
 		panic("unknown database type")
 	}
+}
+
+func WriteInfoToOutputFile(path string, data string) {
+	err := ioutil.WriteFile(path, []byte(data), 0644)
+	commands.CheckError(err)
 }

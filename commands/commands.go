@@ -20,7 +20,7 @@ func runCommand(command *exec.Cmd) ([]byte, error) {
 	return output, err
 }
 
-func ListInstances(project string) (models.GCloudSQLInstanceList, error) {
+func ListInstances(project string) (models.GCloudSQLInstanceList) {
 	args := []string {
 		"sql",
 		"instances",
@@ -30,22 +30,16 @@ func ListInstances(project string) (models.GCloudSQLInstanceList, error) {
 	}
 
 	output, err := runCommand(exec.Command("gcloud", args...))
-
-	if err != nil {
-		return nil, err
-	}
+	CheckError(err)
 
 	instances := make(models.GCloudSQLInstanceList, 0)
 	err = json.Unmarshal(output, &instances)
+	CheckError(err)
 
-	if err != nil {
-		panic(err)
-	}
-
-	return instances, err
+	return instances
 }
 
-func ActivateServiceAccount(serviceAccount string) error {
+func ActivateServiceAccount(serviceAccount string) {
 	saPath := WriteServiceAccountToFile(serviceAccount)
 
 	args := []string {
@@ -56,11 +50,10 @@ func ActivateServiceAccount(serviceAccount string) error {
 	}
 
 	_, err := runCommand(exec.Command("gcloud", args...))
-
-	return err
+	CheckError(err)
 }
 
-func GetInstanceInfo(name string, project string) (models.GCloudSQLInstance, error) {
+func GetInstanceInfo(name string, project string) (models.GCloudSQLInstance) {
 	args := []string {
 		"sql",
 		"instances",
@@ -71,34 +64,28 @@ func GetInstanceInfo(name string, project string) (models.GCloudSQLInstance, err
 	}
 
 	output, err := runCommand(exec.Command("gcloud", args...))
-
-	if err != nil {
-		panic(err)
-	}
+	CheckError(err)
 
 	var instance models.GCloudSQLInstance
 	err = json.Unmarshal(output, &instance)
+	CheckError(err)
 
-	if err != nil {
-		panic(err)
-	}
-
-	return instance, nil
+	return instance
 }
 
 func WriteServiceAccountToFile(serviceAccount string) string {
 	saUuid, err := uuid.NewRandom()
-	Check(err)
+	CheckError(err)
 
 	saPath := "/tmp/%s" + saUuid.String()
 
 	err = ioutil.WriteFile(saPath, []byte(serviceAccount), 0644)
-	Check(err)
+	CheckError(err)
 
 	return saPath
 }
 
-func Check(e error) {
+func CheckError(e error) {
 	if e != nil {
 		panic(e)
 	}

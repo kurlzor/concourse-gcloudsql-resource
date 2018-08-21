@@ -9,5 +9,5 @@ RUN go build -o /assets/in github.com/Evaneos/concourse-gcloudsql-resource/in
 
 FROM google/cloud-sdk:alpine
 
-COPY --from=builder /assets/check /assets/check
-COPY --from=builder /assets/in /assets/in
+COPY --from=builder /assets/check /opt/resource/check
+COPY --from=builder /assets/in /opt/resource/in
