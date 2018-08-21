@@ -36,10 +36,12 @@ func (source Source) Validate() error {
 }
 
 type GCloudSQLInstance struct {
-	Name         string    `json:"name"`
-	InstanceType string    `json:"instanceType"`
-	Region       string    `json:"region"`
-	CreationTime time.Time `json:"serverCaCert:createTime"`
+	Name            string
+	DatabaseVersion string
+	Region          string
+	ServerCaCert struct {
+		CreateTime time.Time
+	}
 }
 
 type GCloudSQLInstanceList []GCloudSQLInstance
@@ -49,13 +51,19 @@ func (list GCloudSQLInstanceList) Len() int {
 }
 
 func (list GCloudSQLInstanceList) Less(i, j int) bool {
-	return list[i].CreationTime.Before(list[j].CreationTime)
+	return list[i].ServerCaCert.CreateTime.Before(list[j].ServerCaCert.CreateTime)
 }
 
 func (list GCloudSQLInstanceList) Swap(i, j int) {
 	list[i], list[j] = list[j], list[i]
 }
 
-type ConcourseGCloudSQLVersion struct {
-	Version Version `json:"version"`
+type Metadata struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type ConcourseInOutput struct {
+	Version  Version    `json:"version"`
+	Metadata []Metadata `json:"metadata"`
 }
