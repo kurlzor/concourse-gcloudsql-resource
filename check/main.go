@@ -25,6 +25,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	commands.ActivateServiceAccount(*request.Source.ServiceAccount)
+
 	instances, err := commands.ListInstances(*request.Source.Project)
 
 	if err != nil {
